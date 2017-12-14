@@ -1,6 +1,7 @@
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class Day12 extends AdventOfCode {
     @Override
@@ -20,10 +21,18 @@ public class Day12 extends AdventOfCode {
             if (x.isEmpty()) {
                 x.add(a);
             } else {
-                final Set<String> found = x.stream().filter(inspect -> !Collections.disjoint(a, inspect)).findFirst().orElse(null);
+                final Collection<Set<String>> found = x.stream().filter(inspect -> !Collections.disjoint(a, inspect)).collect(Collectors.toList());
 
-                if (found != null) {
-                    found.addAll(a);
+                if (!found.isEmpty()) {
+                    final Set<String> first = found.stream().findFirst().orElse(null);
+                    if (first != null) {
+                        found.stream().skip(1).forEach(set -> {
+                            first.addAll(set);
+                            x.removeAll(set);
+                        });
+
+                        first.addAll(a);
+                    }
                 } else {
                     x.add(a);
                 }
