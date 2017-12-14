@@ -28,7 +28,7 @@ public class Day12 extends AdventOfCode {
                     if (first != null) {
                         found.stream().skip(1).forEach(set -> {
                             first.addAll(set);
-                            x.removeAll(set);
+                            x.remove(set);
                         });
 
                         first.addAll(a);
@@ -39,9 +39,12 @@ public class Day12 extends AdventOfCode {
             }
         }
 
-
+        // Teil 1
         final Optional<Set<String>> optional = x.stream().filter(set -> set.contains("0")).findFirst();
         optional.ifPresent(strings -> System.out.println(strings.size()));
+
+        // Teil 2
+        System.out.println(x.size());
     }
 
     String[] input = {
