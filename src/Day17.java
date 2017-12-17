@@ -5,6 +5,8 @@ public class Day17 extends AdventOfCode {
     void run() {
         final int maxCycles = 2018;
         final int step = 344;
+
+        // Teil 1
         final List<Integer> buffer = new ArrayList<>(maxCycles);
         int insertAfterPos;
 
@@ -22,6 +24,17 @@ public class Day17 extends AdventOfCode {
         final int currentPos = buffer.indexOf(2017);
         final int result = buffer.get((currentPos+1)%buffer.size());
         System.out.println(result);
+
+        // Teil 2
+        int valueAfterPos0 = 0;
+        insertAfterPos = 0;
+        for (int currentValue=1; currentValue<50_000_000; currentValue++) {
+            if (insertAfterPos == 0) {
+                valueAfterPos0 = currentValue;
+            }
+            insertAfterPos = (insertAfterPos + 1 + step) % (currentValue + 1);
+        }
+        System.out.println(valueAfterPos0);
     }
 
  }
