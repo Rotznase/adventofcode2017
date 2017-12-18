@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 public class Day14 extends AdventOfCode {
     @Override
     void run() {
+//        String input = "flqrgnkx";
         String input = "nbysizxe";
         Day10 day10 = new Day10();
 
@@ -28,125 +29,118 @@ public class Day14 extends AdventOfCode {
 
 
         // Teil 2
-//        Collection<P> m = new ArrayList<>();
-//        for (int i=0; i<128; i++) {
-//            for (int j=0; j<128; j++) {
-//                m.add(new P(i+1, j+1, disk));
-//            }
-//        }
-//
-//
-//        int[] cnt=new int[1];
-//        final List<Set<P>> regions = new ArrayList<>();
-//        m.stream().filter(P::used).forEach(p -> {
-//            cnt[0]++;
-//            Collection<Set<P>> found = regions.stream().filter(region -> !Collections.disjoint(region, p.adjacent(true))).collect(Collectors.toList());
-//
-//            if (!found.isEmpty()) {
-//                final Set<P> first = found.stream().findFirst().orElse(null);
-//                assert first != null;
-//                found.stream().skip(1).forEach(set -> {
-//                    first.addAll(set);
-//                    regions.remove(set);
-//                });
-//
-//                first.addAll(p.adjacent(true));
-//            } else {
-//                regions.add(p.adjacent(true));
-//            }
-//        });
-//
-//        if (regions.size() == 1242)
-//            System.out.println("Richtig");
-//        else
-//            System.out.println("Falsch");
-//
-//        int sum=0;
-//        for (Set<P> aaa: regions)
-//            sum += aaa.size();
-//        System.out.println(sum);
-//
-//        count = 0;
-//        for (Set<P> aaa: regions)
-//            if (aaa.size()==1)
-//                count++;
-//        System.out.println(count);
-//
-//
-//
-//        for (int i=0; i<128; i++) {
-//            for (int j=0; j<128; j++) {
-//                final P p = new P(i+1,j+1,disk);
-//                final Set<P> found = regions.stream().filter(region -> !Collections.disjoint(region, p.adjacent(true))).findFirst().orElse(null);
-//                final int index = regions.indexOf(found);
-//
-//                if (index == 203) {
-//                    System.out.print(!p.used() ? "." : "x");
-//                } else {
-//                    System.out.print(!p.used() ? "." : "#");
-//                }
-//            }
-//            System.out.println();
-//        }
-//
+        Collection<P> m = new ArrayList<>();
+        for (int i=0; i<128; i++) {
+            for (int j=0; j<128; j++) {
+                m.add(new P(i+1, j+1, disk));
+            }
+        }
+
+        final List<Set<P>> regions = new ArrayList<>();
+        m.stream().filter(P::used).forEach(p -> {
+            final Set<P> adjacent = p.adjacent(true);
+
+            Collection<Set<P>> found = regions.stream().filter(region -> !Collections.disjoint(region, adjacent))
+                    .collect(Collectors.toList());
+
+            if (!found.isEmpty()) {
+                final Set<P> first = found.stream().findFirst().orElse(null);
+                assert first != null;
+                found.stream().skip(1).forEach(set -> {
+                    first.addAll(set);
+                    regions.remove(set);
+                });
+
+                first.addAll(adjacent);
+            } else {
+                regions.add(adjacent);
+            }
+        });
+
+        System.out.println(regions.size());
     }
 
-//    private class P {
-//        char[][] matrix;
-//        int i, j;
-//
-//        P(int i, int j, char[][] matrix) {
-//            this.i = i;
-//            this.j = j;
-//            this.matrix = matrix;
-//        }
-//
-//        boolean used() {
-//            return matrix[j-1][i-1] == '1';
-//        }
-//
-//        Set<P> adjacent(boolean includeSelf) {
-//            Set<P> set = new HashSet<>();
-//            P p;
-//
-//            p = new P((i -1 + 127) % 128 + 1, j, matrix);
-//            if (p.used())
-//                set.add(p);
-//            p = new P((i -1 + 1) % 128 + 1, j, matrix);
-//            if (p.used())
-//                set.add(p);
-//            p = new P(i, (j -1 + 127) % 128 + 1, matrix);
-//            if (p.used())
-//                set.add(p);
-//            p = new P(i, (j -1 + 1) % 128 + 1, matrix);
-//            if (p.used())
-//                set.add(p);
-//            if (includeSelf && used())
-//                set.add(this);
-//            return set;
-//        }
-//
-//        @Override
-//        public boolean equals(Object o) {
-//            if (this == o) return true;
-//            if (o == null || getClass() != o.getClass()) return false;
-//
-//            P p = (P) o;
-//
-//            if (i != p.i) return false;
-//            return j == p.j;
-//        }
-//
-//        @Override
-//        public int hashCode() {
-//            int result = i;
-//            result = 31 * result + j;
-//            return result;
-//        }
-//
-//        @Override
-//        public String toString() {
-//            return "(" + i + ", " + j + ")";
-//        }
-//    }
+
+    private void add(P p, Set<P> region) {
+        if (!p.used() || region.contains(p))
+            return;
+        region.add(p);
+        add(p.north(), region);
+        add(p.west(),  region);
+        add(p.south(), region);
+        add(p.east(),  region);
+    }
+
+    private class P {
+        char[][] matrix;
+        int i, j;
+
+        P(int i, int j, char[][] matrix) {
+            this.i = i;
+            this.j = j;
+            this.matrix = matrix;
+        }
+
+        boolean used() {
+            return matrix[j-1][i-1] == '1';
+        }
+
+        P south() {
+            return j + 1 <= 128 ? new P(i, j + 1, matrix) : null;
+        }
+        P north() {
+            return j - 1 >= 1 ? new P(i, j - 1, matrix) : null;
+        }
+        P west() {
+            return i - 1 >= 1 ? new P(i - 1, j, matrix) : null;
+        }
+        P east() {
+            return i + 1 <= 128 ? new P(i + 1, j, matrix) : null;
+        }
+
+        Set<P> adjacent(boolean includeSelf) {
+            Set<P> set = new HashSet<>();
+            P p;
+
+            p = west();
+            if (p != null && p.used())
+                set.add(p);
+            p = east();
+            if (p != null && p.used())
+                set.add(p);
+            p = north();
+            if (p != null && p.used())
+                set.add(p);
+            p = south();
+            if (p != null && p.used())
+                set.add(p);
+            if (includeSelf && used())
+                set.add(this);
+            return set;
+        }
+
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            P p = (P) o;
+
+            if (i != p.i) return false;
+            return j == p.j;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = i;
+            result = 31 * result + j;
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "(" + i + ", " + j + ")";
+        }
+    }
 }
