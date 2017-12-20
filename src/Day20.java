@@ -1,12 +1,14 @@
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static java.lang.Long.parseLong;
 import static java.lang.Math.abs;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toSet;
 
 public class Day20 extends AdventOfCode {
     @Override
@@ -14,6 +16,7 @@ public class Day20 extends AdventOfCode {
 
         final List<P> ensemble = new ArrayList<>();
 
+        // Teil 1
         parseInput(ensemble, input);
 
         int count = 0;
@@ -45,6 +48,33 @@ public class Day20 extends AdventOfCode {
         if (candidateOld != null) {
             System.out.println("Particle " + ensemble.indexOf(candidateOld) + ", distance = " + candidateOld.distance() + " " + candidateOld);
         }
+
+        ensemble.clear();
+
+        // Teil 2
+        parseInput(ensemble, input);
+
+        int iterationBegin = 0;
+        int iteration = 0;
+        while (iteration - iterationBegin < 1000) {
+            for (P p : ensemble) {
+                p.move();
+            }
+
+            Map<P, Set<P>> map = ensemble.stream().collect(
+                    groupingBy(P::retainLocation, HashMap::new, mapping(Function.identity(), toSet())));
+
+            for (Set<P> set: map.values()) {
+                if (set.size() > 1) {
+                    iterationBegin = iteration;
+                    ensemble.removeAll(set);
+                }
+            }
+
+            iteration++;
+        }
+
+        System.out.println(ensemble.size());
     }
 
     private void parseInput(Collection<P> col, String[] input) {
@@ -71,6 +101,12 @@ public class Day20 extends AdventOfCode {
         long ax, ay, az;
 
         P() {
+        }
+
+        P(long px, long py, long pz) {
+            this.px = px;
+            this.py = py;
+            this.pz = pz;
         }
 
         void setP(long x, long y, long z) {
@@ -106,6 +142,10 @@ public class Day20 extends AdventOfCode {
 
         public String toString() {
             return "("+px+","+py+","+pz+")";
+        }
+
+        P retainLocation() {
+            return new P(this.px, this.py, this.pz);
         }
 
         @Override
