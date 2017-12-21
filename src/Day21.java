@@ -28,25 +28,28 @@ public class Day21 extends AdventOfCode {
         }
 
 
-        Image image = Image.parse(".#./..#/###");
 
-        for (int i=0; i<5; i++) {
-            for (int mod: Arrays.asList(2,3)) {
-                if (image.size() % mod == 0) {
-                    Image[][] grid = image.split(mod);
-                    for (int r = 0; r < grid.length; r++) {
-                        for (int c = 0; c < grid[r].length; c++) {
-                            grid[r][c].transform(enhancementRules);
+        for (int iterations: Arrays.asList(5,18)) {
+
+            Image image = Image.parse(".#./..#/###");
+
+            for (int i = 0; i < iterations; i++) {
+                for (int mod : Arrays.asList(2, 3)) {
+                    if (image.size() % mod == 0) {
+                        Image[][] grid = image.split(mod);
+                        for (int r = 0; r < grid.length; r++) {
+                            for (int c = 0; c < grid[r].length; c++) {
+                                grid[r][c].transform(enhancementRules);
+                            }
                         }
+                        image.join(grid);
+                        break;
                     }
-                    image.join(grid);
-                    break;
                 }
             }
+
+            System.out.println(image.count('#'));
         }
-
-        System.out.println(image.count('#'));
-
     }
 
 
