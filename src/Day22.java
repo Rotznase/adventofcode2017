@@ -1,60 +1,111 @@
-import java.util.HashSet;
-import java.util.Set;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Day22 extends AdventOfCode {
     @Override
     void run() {
-        Set<Node> infectedNodes = parseInput(gridComputingCluster);
+        Map<Long, Node> nodes = parseInput(gridComputingCluster);
 
-        Carrier carrier = new Carrier(gridComputingCluster[0].length()/2, gridComputingCluster.length/2, Direction.NORTH);
+        Carrier carrier = new Carrier1(gridComputingCluster[0].length()/2, gridComputingCluster.length/2, Direction.NORTH);
 
         for (int i=0; i<10000; i++) {
-            carrier.burst(infectedNodes);
+            carrier.burst(nodes);
         }
 
-        System.out.println(carrier.infectionCounter);
+        System.out.println("Part 1: "+carrier.infectionCounter);
+
+        nodes = parseInput(gridComputingCluster);
+
+        carrier = new Carrier2(gridComputingCluster[0].length()/2, gridComputingCluster.length/2, Direction.NORTH);
+
+        for (int i=0; i<10000000; i++) {
+            carrier.burst(nodes);
+        }
+
+        System.out.println("Part 2: "+carrier.infectionCounter);
     }
 
-    class Carrier {
+    class Carrier1 extends Carrier {
+        Carrier1(int x, int y, Direction dir) {
+            super(x, y, dir);
+        }
+
+        void process(Node node) {
+            switch (node.state) {
+                case INFECTED:
+                    dir = dir.rotateRight();
+                    node.makeClean();
+                    break;
+                case CLEAN:
+                    dir = dir.rotateLeft();
+                    node.makeInfected();
+                    infectionCounter++;
+                    break;
+            }
+        }
+    }
+
+    class Carrier2 extends Carrier {
+        Carrier2(int x, int y, Direction dir) {
+            super(x, y, dir);
+        }
+
+        void process(Node node) {
+            switch (node.state) {
+                case CLEAN:
+                    dir = dir.rotateLeft();
+                    node.makeWeakened();
+                    break;
+                case WEAKENED:
+                    // carrier is heading in the same direction
+                    node.makeInfected();
+                    infectionCounter++;
+                    break;
+                case INFECTED:
+                    dir = dir.rotateRight();
+                    node.makeFlagged();
+                    break;
+                case FLAGGED:
+                    dir = dir.reverse();
+                    node.makeClean();
+                    break;
+            }
+        }
+    }
+
+    abstract class Carrier {
         int x;
         int y;
         Direction dir;
 
         int infectionCounter;
 
-        public Carrier(int x, int y, Direction dir) {
+        Carrier(int x, int y, Direction dir) {
             this.x = x;
             this.y = y;
             this.dir = dir;
             this.infectionCounter = 0;
         }
 
-        void burst(Set<Node> infectedNodes) {
-            final Node node = infectedNodes.stream()
-                    .filter(n -> x==n.x && y==n.y)
-                    .findFirst()
-                    .orElse(null);
+        void burst(Map<Long, Node> nodes) {
+            final Node node = nodes.getOrDefault(keyOf(x,y),
+                    new Node(x, y, InfectionState.CLEAN));
 
-            if (node != null) {
-                dir = dir.rotateRight();
-                infectedNodes.remove(node);
-            } else {
-                dir = dir.rotateLeft();
-                infectionCounter++;
-                infectedNodes.add(new Node(x,y));
+            if (!nodes.containsKey(keyOf(x,y))) {
+                nodes.put(keyOf(x,y), node);
             }
-//            if (node.isInfected()) {
-//                node.clean();
-//                dir = dir.rotateRight();
-//                infectedNodes.remove(node);
-//            } else if (node.isClean()) {
-//                node.infect();
-//                dir = dir.rotateLeft();
-//                infectionCounter++;
-//                infectedNodes.add(node);
-//            }
+
+            process(node);
+
+            if (node.state.isClean()) {
+                nodes.remove(node);
+            }
+
             move();
         }
+
+        abstract void process(Node node);
 
         void move() {
             switch (dir) {
@@ -63,36 +114,35 @@ public class Day22 extends AdventOfCode {
                 case WEST:  x--;break;
                 case EAST:  x++;break;
             }
-//            x = (x+infectionGrid[0].length) % infectionGrid[0].length;
-//            y = (y+infectionGrid.length) % infectionGrid.length;
         }
     }
 
     class Node {
         int x;
         int y;
-//        boolean infectionStatus;
+        InfectionState state;
 
-        public Node(int x, int y) {
+        Node(int x, int y, InfectionState infectionState) {
             this.x = x;
             this.y = y;
+            this.state = infectionState;
         }
 
-//        boolean isInfected() {
-//            return infectionStatus == true;
-//        }
-//
-//        boolean isClean() {
-//            return infectionStatus == false;
-//        }
-//
-//        void infect() {
-//            infectionStatus = true;
-//        }
-//
-//        void clean() {
-//            infectionStatus = false;
-//        }
+        void makeClean() {
+            state = InfectionState.CLEAN;
+        }
+
+        void makeWeakened() {
+            state = InfectionState.WEAKENED;
+        }
+
+        void makeInfected() {
+            state = InfectionState.INFECTED;
+        }
+
+        void makeFlagged() {
+            state = InfectionState.FLAGGED;
+        }
 
         @Override
         public boolean equals(Object o) {
@@ -110,6 +160,36 @@ public class Day22 extends AdventOfCode {
             int result = x;
             result = 31 * result + y;
             return result;
+        }
+    }
+
+    enum InfectionState {
+        CLEAN, WEAKENED, INFECTED, FLAGGED;
+
+        boolean isClean() {
+            return this == CLEAN;
+        }
+
+        boolean isWeakened() {
+            return this == WEAKENED;
+        }
+
+        boolean isInfected() {
+            return this == INFECTED;
+        }
+
+        boolean isFlagged() {
+            return this == FLAGGED;
+        }
+
+        public InfectionState nextState() {
+            switch (this) {
+                case CLEAN:     return WEAKENED;
+                case WEAKENED:  return INFECTED;
+                case INFECTED:  return FLAGGED;
+                case FLAGGED:   return CLEAN;
+            }
+            return null;
         }
     }
 
@@ -135,15 +215,26 @@ public class Day22 extends AdventOfCode {
             }
             return null;
         }
+
+        Direction reverse() {
+            switch (this) {
+                case NORTH: return SOUTH;
+                case WEST:  return EAST;
+                case SOUTH: return NORTH;
+                case EAST:  return WEST;
+            }
+            return null;
+        }
     }
 
+    private EnumSet<InfectionState> allowedeStates = EnumSet.of(InfectionState.CLEAN, InfectionState.INFECTED);
 
-    Set<Node> parseInput(String[] input) {
-        Set<Node> infectedNodes = new HashSet<>();
+    Map<Long, Node> parseInput(String[] input) {
+        Map<Long, Node> infectedNodes = new HashMap<>();
         for (int y=0; y<input.length; y++) {
             for (int x=0; x<input[y].length(); x++) {
                 if (input[y].charAt(x) == '#') {
-                    infectedNodes.add(new Node(x, y));
+                    infectedNodes.put(keyOf(x,y), new Node(x, y, InfectionState.INFECTED));
                 }
             }
         }
@@ -151,6 +242,9 @@ public class Day22 extends AdventOfCode {
         return infectedNodes;
     }
 
+    long keyOf(int x, int y) {
+        return x+y*1000000;
+    }
     private String[] gridComputingCluster = {
 //        ".........",
 //        ".........",
