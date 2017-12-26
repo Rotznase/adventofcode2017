@@ -1,10 +1,5 @@
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static java.lang.Math.max;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Day25 extends AdventOfCode {
     @Override
